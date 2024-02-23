@@ -1,6 +1,8 @@
-# Golang Data Types
+# Golang Practice
 
-## Numbers
+## Types
+
+### Numbers
 
 - Integer:
 
@@ -25,4 +27,26 @@
 
 - Boolean:
 
-## Variables
+### Variables
+
+- `var x string = "Hello World"` or `x := "Hello World"`
+- Variable name should start with a letter or \_. Go compiler doesn't care about name of a variable
+- Scope: Variable exists within the nearest {} or block, including any nested curly braces but not outside of them
+- Constants: `const x string = "Hello world"`
+- Defining Multiple Variables:
+
+```golang
+var (
+    a = 5
+    b = 6
+    c = 7
+)
+```
+
+### Control Structures
+
+- The `for` Statement:
+
+```golang
+
+```
