@@ -27,7 +27,7 @@
 
 - Boolean:
 
-### Variables
+## Variables
 
 - `var x string = "Hello World"` or `x := "Hello World"`
 - Variable name should start with a letter or \_. Go compiler doesn't care about name of a variable
@@ -43,10 +43,46 @@ var (
 )
 ```
 
-### Control Structures
+## Control Structures
 
 - The `for` Statement:
 
 ```golang
+func main() {
+    i := 1
+    for i <= 10 {
+        fmt.Println(i)
+        i += 1
+    }
+}
 
+func main() {
+    for i + = 1; i <= 10; i++ {
+        fmt.Println(i)
+    }
+}
+
+func main() {
+    for i, value := range x {
+
+    }
+}
 ```
+
+- The `if` Statement:
+- The `switch` Statement:
+
+## Arrays, Slices, and Maps
+
+### Arrays
+
+- Is a numbered sequence of elements of a single type with a fixed length
+
+```golang
+    var x [5]int
+    x := [5]int{1,2,3,4,5}
+```
+
+## Slices
+
+- Is a segment of a array.
