@@ -83,6 +83,85 @@ func main() {
     x := [5]int{1,2,3,4,5}
 ```
 
-## Slices
+### Slices
 
-- Is a segment of a array.
+- Is a segment of a array. But its length is allowed to change
+
+```golang
+    var x []float64
+    // This creates a slice that is associated with an underlying float64 array of length 5
+    x := make([]float64, 5)
+
+    // This creates a slice with length of 5 that is associated with an underlying float64 array of length 10
+    x := make([]float64, 5, 10)
+
+    // This create a slice from index 0 -> 4 (5-1) from arr
+    arr := [5]float64{1,2,3,4,5}
+    x := arr[0:5]
+    // Create slice form index 0 to end
+    x := arr[0:]
+    x := arr[0:len(arr)]
+    x := arr[:]
+    x := arr[:5]
+```
+
+- `append`: add elements onto the end of a slice. If there is not enough sufficient capacity => create new slice then add the new elements
+- `copy`: copy all src to dst. If 2 slices have different length => smaller one will be used
+
+### Maps
+
+- Is an unordered collection of key-value pairs(dictionaries, hash tables)
+- Map doesn't have fixed length
+
+```golang
+    x := make(map[string]int)
+    x["1"] = 1
+
+    x := map[string]string{
+        "1": "1"
+    }
+```
+
+## Functions
+
+- Parameters names can be different
+- Variables must be passed to functions
+- Functions form a call stacks: Each time a function is called, we push it onto the call stack. Each time we return a function. we pop the last function off of the stack
+- Return types can have names
+
+```golang
+    func f2() (r int) {
+        return 1
+    }
+```
+
+### Variadic Functions
+
+```golang
+    func add(args ...int) int {
+        total := 0
+        for _, v := range args {
+            total += v
+        }
+
+        return total
+    }
+
+    func main() {
+        fmt.Println(add(1,2,3))
+        x := []int{1,2,3}
+        fmt.Println(add(x...))
+    }
+```
+
+- In above example, add allow to be called with multiple integers. This is called variadic parameter
+- The `...` indicate it takes 0 or more int.
+- Can also pass a slice of int to the function using `...`
+
+### Closure
+
+```golang
+
+```
+
+-
