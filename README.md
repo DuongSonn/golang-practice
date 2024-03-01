@@ -161,7 +161,240 @@ func main() {
 ### Closure
 
 ```golang
+    func makeEvenGenerator() func() uint {
+        i := uint(0)
+        return func() (ret uint) {
+            ret = i
+            i += 2
+            return
+        }
+    }
 
+    func main() {
+        x := 0
+        increment := func() int {
+            x++
+            return x
+        }
+        fmt.Println(increment()) // Print 1
+        fmt.Println(increment()) // Print 2
+
+        nextEven := makeEvenGenerator()
+        fmt.Println(nextEven()) // 0
+        fmt.Println(nextEven()) // 2
+        fmt.Println(nextEven()) // 4
+    }
 ```
 
--
+- It is possible to create functions inside of functions
+
+### Recursion
+
+### defer
+
+- defer is often used when resources need to be freed in some way
+- if function has multiple return statements, defer func will happen before any of them
+- defer functions are run even if a runtime panic occurs
+
+### panic and recover
+
+```golang
+    func main() {
+        defer func() {
+            str := recover()
+            fmt.Println(str)
+        }()
+
+        panic("PANIC")
+    }
+```
+
+- `panic` indicates a programmer error or exceptional condition that there is no way to recover from it
+- we use panic function to create a runtime error
+- recover stops the panic and returns the value that was passed to the call panic
+
+### Pointers
+
+```golang
+    func zero(xPtr *int) {
+        *xPtr = 0 // Store the int 0 in the memory location xPtr refers to.
+    }
+    func main() {
+        x := 5
+        zero(&x)
+        fmt.Println(x) // x is 0
+
+        y := new(int)
+        zero(y)
+        fmt.Println(*y)
+    }
+```
+
+- pointers reference a location in memory where a value is stored rather than the value itself
+- The `*` give access to the value the pointer points to
+- The `&` find the address of a variable
+- The `new` return a pointer to the type it takes as an argument
+
+## Structs and interfaces
+
+### Structs
+
+```golang
+    type  Circle struct {
+        x,y,r float64
+    }
+
+    var c Circle
+    c := new(Circle) // The new function return a pointer to the struct (*Circle)
+    c := &Circle{0,0,0}
+
+    // area is a method of Circle
+    func (c *Circle) area() float64 {
+        return math.Pi * c.r*c.r
+    }
+
+    type Person struct {
+        Name string
+    }
+
+
+    type Android struct {
+        Person Person // This is called named field
+        Model string
+    }
+    a := new(Android)
+    a.Person.Talk()
+
+    type Android struct {
+        Person // This is anonymous field
+        Model string
+    }
+    a := new(Android)
+    a.Talk()
+```
+
+- Pointer are often used with structs so functions can modify their contents
+- `x,y,z` are called fields
+- `method` are associated with types => its behavior is specific to a type
+- `method` have an implicit receiver => its allow methods to access and modify the properties of the object
+- `struct` defines fields
+- `interface` defines a `method` set
+
+## Packages
+
+## Testing
+
+## Concurrency
+
+- It helps handle one or more tasks simultaneously
+
+### Goroutines
+
+- Is a function capable of running concurrently with other functions
+
+```golang
+    func f(n int) {
+        for i := 0; i < 10; i++ {
+            fmt.Println(n, ":", i)
+        }
+    }
+
+    func main() {
+        go f(0)
+        var input string
+        fmt.Scanln(&input)
+    }
+```
+
+### Channels
+
+```golang
+    func pinger(c chan string) {
+        for i := 0; ; i++ {
+            c <- "ping"
+        }
+    }
+    func ponger(c chan string) {
+        for i := 0; ; i++ {
+            c <- "pong"
+        }
+    }
+
+    func printer(c chan string) {
+        for {
+            msg := <- c
+            fmt.Println(msg)
+            time.Sleep(time.Second * 1)
+        }
+    }
+
+    func main() {
+        var c chan string = make(chan string)
+
+        // This will take turn print ping and pong
+        go pinger(c)
+        go ponger(c)
+        go printer(c)
+
+        var input string
+        fmt.Scanln(&input)
+    }
+```
+
+- Channels provide a way for 2 goroutines to communicate with each other and synchronize their execution
+- Channel is represented with the keyword `chan` followed by the type passed to the channel
+- `c <-` is to send data to the channel
+- `<- c` is to receive data from the channel
+
+```golang
+    func pinger(chan <- ) // pinger is only allowed to send to c
+    func printer(<- chan) // printer is only allowed to receive from c
+```
+
+- We can restrict channel to either send of receive data
+
+```golang
+    func main() {
+        c1 := make(chan string)
+        c2 := make(chan string)
+        go func() {
+            for {
+                c1 <- "from 1"
+                time.Sleep(time.Second * 2)
+            }
+        }()
+        go func() {
+            for {
+                c2 <- "from 2"
+                time.Sleep(time.Second * 3)
+            }
+        }()
+        go func() {
+            for {
+                select {
+                    case msg1 := <- c1:
+                        fmt.Println(msg1)
+                    case msg2 := <- c2:
+                        fmt.Println(msg2)
+                    case <- time.After(time.Second):
+                        fmt.Println("timeout")
+                }
+            }
+        }()
+
+        var input string
+        fmt.Scanln(&input)
+    }
+```
+
+- `select` work like `switch` for channel
+- `select` pick the 1st channel that is ready and receive from it (or sends to it). If more than 1 channels are ready, it randomly pick 1. If none is ready, it blocks until one becomes available
+- `time.After` after duration (1 second) of waiting, the function will print timeout. this prevent from waiting forever
+- `default` case will happen if none of the channel is ready
+- Channels are synchronous; both side of the channel will wait until the other side is ready
+
+```golang
+    c := make(chan int, 1)
+```
+
+- Buffered Channel is asynchronous; sending or receiving a message will not wait unless the channel is full. If the channel is full, the sending will wait until there is room for more
