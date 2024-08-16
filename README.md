@@ -195,6 +195,7 @@ func main() {
 - defer is often used when resources need to be freed in some way
 - if function has multiple return statements, defer func will happen before any of them
 - defer functions are run even if a runtime panic occurs
+- Deferred function calls are pushed onto a stack. When a function returns, its deferred calls are executed in last-in-first-out order.
 
 ### panic and recover
 
@@ -290,7 +291,7 @@ func main() {
 
 ### Goroutines
 
-- Is a function capable of running concurrently with other functions
+- Is a function capable of running concurrently with other functions.
 
 ```golang
     func f(n int) {
@@ -305,6 +306,42 @@ func main() {
         fmt.Scanln(&input)
     }
 ```
+
+### Mutex
+
+- Provides a concurrent-safe way to express exclusive access to these shared resources. It will create critacl sessions for the resourcé
+- Critical sections are so named because they reflect a bottleneck in your program. It is somewhat expensive to enter and exit a critical section, and so generally people attempt to minimize the time spent in critical sections
+=> Solutions we use `sync.RWMutex`
+- In `sync,RWMutext` you can request a lock for reading, in which case you will be granted access unless the lock is being held for writing. This means that an arbitrary number of readers can hold a reader lock so long as nothing else is holding a writer lock.
+
+### Cond
+
+- In some cases, you want goroutine to stop at a certain condition then contiunue executing affter a signal is received => You use `Cond`
+```
+c := sync.NewCond(&sync.Mutex{})
+queue := make([]interface{}, 0, 10)
+removeFromQueue := func(delay time.Duration) {
+  time.Sleep(delay)
+  c.L.Lock()
+  queue = queue[1:]
+  fmt.Println("Removed from queue")
+  c.L.Unlock()
+  c.Signal()
+}
+for i := 0; i < 10; i++{
+  c.L.Lock()
+  for len(queue) == 2 {
+    c.Wait()
+  }
+  fmt.Println("Adding to queue")
+  queue = append(queue, struct{}{})
+  go removeFromQueue(1*time.Second)
+  c.L.Unlock()
+}
+```
+- `Wait` doesn’t just block, it suspends the current goroutine, allowing other goroutines to run on the OS thread. Upon entering Wait, `Unlock` is called on the `Cond` variable’s `Locker`, and upon exiting `Wait`, `Lock` is called on the `Cond` variable’s `Locker`
+- Internally, the run‐time maintains a FIFO list of goroutines waiting to be signaled; `Signal` finds the goroutine that’s been waiting the longest and notifies that
+- `Broadcast` sends a signal to all goroutines that are waiting
 
 ### Channels
 
@@ -397,4 +434,5 @@ func main() {
     c := make(chan int, 1)
 ```
 
+- Unbufferd Channel is synchronous: sending and receiving a message will perform one after another.
 - Buffered Channel is asynchronous; sending or receiving a message will not wait unless the channel is full. If the channel is full, the sending will wait until there is room for more
