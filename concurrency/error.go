@@ -35,7 +35,7 @@ func errorPatter() {
 	done := make(chan interface{})
 	defer close(done)
 
-	urls := []string{"https://www.google.com", "https://badhost"}
+	urls := []string{"https://www.google.com", "https://badhost", "example.com"}
 	for result := range checkStatus(done, urls...) {
 		if result.Error != nil {
 			fmt.Printf("error: %v", result.Error)
