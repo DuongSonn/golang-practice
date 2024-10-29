@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"sync"
@@ -9,7 +10,7 @@ import (
 
 const (
 	invalidUrl = "http://localhost:3000/"
-	urlLength  = 10
+	urlLength  = 5
 )
 
 func generateUrls() []string {
@@ -59,60 +60,69 @@ func makeSingleRequest() {
 // makeConcurrentRequestV2 stop when the 1st error is met
 func makeConcurrentRequestV2() {
 	urls := generateUrls()
+	resultChan := make(chan interface{})
+	var wg sync.WaitGroup
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	wg.Add(len(urls) + 1)
 
 	startTime := time.Now().Unix()
 
-	errChan := make(chan error)
-	var wg sync.WaitGroup
-	wg.Add(len(urls) + 1)
-
-	go func(
-		errChan chan error,
-	) {
+	go func() {
 		defer wg.Done()
 
-		err, ok := <-errChan
-		if !ok {
-			fmt.Println("Channel closed")
+		if ctx.Err() != nil {
 			return
 		}
+
+		// Make the request
+		res, err := http.Get(invalidUrl)
 		if err != nil {
-			fmt.Println("Error Detected")
+			fmt.Println("Error occurred, canceling all requests:", err)
+			cancel()
 			return
 		}
 
-		if _, err := http.Get(invalidUrl); err != nil {
-			close(errChan)
-			fmt.Println("Error: \n", err.Error())
+		select {
+		case <-ctx.Done():
+			return
+		case resultChan <- res:
 		}
-
-	}(errChan)
+	}()
 
 	for _, url := range urls {
-		go func(
-			errChan chan error,
-		) {
+		go func(url string) {
 			defer wg.Done()
 
-			err, ok := <-errChan
-			if !ok {
-				fmt.Println("Channel closed")
+			if ctx.Err() != nil {
 				return
 			}
+
+			res, err := http.Get(url)
 			if err != nil {
-				fmt.Println("Error Detected")
-
+				fmt.Println("Error occurred, canceling all requests:", err)
+				cancel()
 				return
 			}
 
-			if _, err := http.Get(url); err != nil {
-				close(errChan)
-				fmt.Println("Error: \n", err.Error())
+			select {
+			case <-ctx.Done():
+				return
+			case resultChan <- res:
 			}
-		}(errChan)
+		}(url)
 	}
 
-	wg.Wait()
+	go func() {
+		wg.Wait()
+		close(resultChan)
+	}()
+
+	// Process results
+	for result := range resultChan {
+		fmt.Println("Received result:", result)
+	}
+
 	endTime := time.Now().Unix()
 	fmt.Printf("Took makeConcurrentRequestV2: %ds \n", endTime-startTime)
 }
