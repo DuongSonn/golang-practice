@@ -52,7 +52,6 @@ func readFile(filePaths []string) <-chan ExcelData {
 			}
 		}
 	}()
-
 	return excel
 }
 
